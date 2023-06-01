@@ -1,0 +1,37 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloud-controller-manager
+  namespace: kube-system
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  namespace: kube-system
+  name: k8s-cluster-client
+  labels:
+    app: k8s-client
+spec:
+  selector:
+    matchLabels:
+      app: k8s-client
+  template:
+    metadata:
+      labels:
+        app: k8s-client
+    spec:
+      serviceAccountName: cloud-controller-manager
+      containers:
+        - name: k8s-client
+          image: linuxpizi/k8s-client-in-cluster:latest
+          imagePullPolicy: Always
+          args:
+            - ./app
+            - --v=1
+            - --cluster-name=$(CLUSTER_NAME)
+            - --cloud-provider=ucloudstack
+            - --use-service-account-credentials=true
+            - --bind-address=127.0.0.1
+          ports:
+            - containerPort: 80
