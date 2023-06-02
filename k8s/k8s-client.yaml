@@ -27,11 +27,28 @@ spec:
           image: linuxpizi/k8s-client-in-cluster:latest
           imagePullPolicy: Always
           args:
-            - ./app
+            - /bin/ucloudstack-cloud-controller-manager
             - --v=1
             - --cluster-name=$(CLUSTER_NAME)
+            - --cloud-config=$(CLOUD_CONFIG)
             - --cloud-provider=ucloudstack
             - --use-service-account-credentials=true
             - --bind-address=127.0.0.1
+          volumeMounts:
+            - name: cloud-config-volume
+              mountPath: /etc/config
+              readOnly: true
+          env:
+            - name: CLOUD_CONFIG
+              value: /etc/config/cloud.yaml
+            - name: CLUSTER_NAME
+              value: kubernetes
           ports:
             - containerPort: 80
+      volumes:
+        - name: cloud-config-volume
+          configMap:
+            name: cloud-config
+            items:
+              - key: cloud-config
+                path: cloud.yaml

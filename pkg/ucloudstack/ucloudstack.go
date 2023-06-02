@@ -5,7 +5,9 @@ import (
 	"errors"
 	"io"
 
+	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
 	cloudprovider "k8s.io/cloud-provider"
 	"k8s.io/klog/v2"
 )
@@ -20,10 +22,25 @@ func init() {
 }
 
 func NewCloudProvider(config io.Reader) (cloudprovider.Interface, error) {
-	return &UCloudStack{}, nil
+	var cloudConfig Config
+	configContents, err := io.ReadAll(config)
+	if err != nil {
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(configContents, &cloudConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	klog.Infof("Init UCloudStack cloud with cloudConfig: %v\n", cloudConfig)
+
+	return &UCloudStack{config: cloudConfig}, nil
 }
 
 type UCloudStack struct {
+	config  Config
+	kclient kubernetes.Interface
 }
 
 type Config struct {
@@ -31,7 +48,7 @@ type Config struct {
 	Master                string  `yaml:"master" json:"master"`
 	Qps                   float32 `yaml:"qps" json:"qps"`
 	Burst                 int     `yaml:"burst" json:"burst"`
-	InsecureSkipTlsVerify bool    `yaml:"insecure_skip_tls_verify" json:"insecure_skip_tls_verify"`
+	InsecureSkipTlsVerify bool    `yaml:"insecureSkipTlsVerify" json:"insecureSkipTlsVerify"`
 }
 
 // https://github.com/kubernetes/cloud-provider/blob/master/cloud.go
@@ -39,9 +56,9 @@ type Config struct {
 // to perform housekeeping or run custom controllers specific to the cloud provider.
 // Any tasks started here should be cleaned up when the stop channel closes.
 func (us *UCloudStack) Initialize(clientBuilder cloudprovider.ControllerClientBuilder, stop <-chan struct{}) {
-	// clientset := clientBuilder.ClientOrDie("cloud-controller-manager")
-	// us.kubeClient = clientset
 	klog.Info("Initialize")
+	clientset := clientBuilder.ClientOrDie("cloud-controller-manager")
+	us.kclient = clientset
 }
 
 // LoadBalancer returns a balancer interface. Also returns true if the interface is supported, false otherwise.
