@@ -49,6 +49,3 @@ spec:
         - name: cloud-config-volume
           configMap:
             name: cloud-config
-            items:
-              - key: cloud-config
-                path: cloud.yaml

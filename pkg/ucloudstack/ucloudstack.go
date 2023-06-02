@@ -43,12 +43,15 @@ type UCloudStack struct {
 	kclient kubernetes.Interface
 }
 
-type Config struct {
-	KubeConfig            string  `yaml:"kube_config" json:"kube_config"`
+type HHConfig struct {
+	KubeConfig            string  `yaml:"kubeconfig" json:"kubeconfig"`
 	Master                string  `yaml:"master" json:"master"`
 	Qps                   float32 `yaml:"qps" json:"qps"`
 	Burst                 int     `yaml:"burst" json:"burst"`
 	InsecureSkipTlsVerify bool    `yaml:"insecureSkipTlsVerify" json:"insecureSkipTlsVerify"`
+}
+type Config struct {
+	HHConfig HHConfig `yaml:"huanghe" json:"huanghe"`
 }
 
 // https://github.com/kubernetes/cloud-provider/blob/master/cloud.go
